@@ -29,6 +29,10 @@ rules:
       - configmaps
     verbs:
       - get
+{{- if or .Values.server.sidecar.rules.enabled .Values.server.sidecar.alerts.enabled }}
+      - watch
+      - list
+{{- end }}
   - apiGroups:
       - "extensions"
     resources:

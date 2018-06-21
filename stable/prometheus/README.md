@@ -248,6 +248,10 @@ Parameter | Description | Default
 `server.service.nodePort` | Port to be used as the service NodePort (ignored if `server.service.type` is not `NodePort`) | `0`
 `server.service.servicePort` | Prometheus server service port | `80`
 `server.service.type` | type of Prometheus server service to create | `ClusterIP`
+`server.sidecar.rules.enabled` | If true, enables the cluster wide search for rules and adds/updates/deletes them in prometheus | `false`
+`server.sidecar.rules.label` | Label that config maps with rules should have to be monitored | `prometheus_rule`
+`server.sidecar.alerts.enabled` | If true, enables the cluster wide search for alerts and adds/updates/deletes them in prometheus | `false`
+`server.sidecar.alerts.label` | Label that config maps with alerts should have to be monitored | `prometheus_alert` 
 `serviceAccounts.alertmanager.create` | If true, create the alertmanager service account | `true`
 `serviceAccounts.alertmanager.name` | name of the alertmanager service account to use or create | `{{ prometheus.alertmanager.fullname }}`
 `serviceAccounts.kubeStateMetrics.create` | If true, create the kubeStateMetrics service account | `true`

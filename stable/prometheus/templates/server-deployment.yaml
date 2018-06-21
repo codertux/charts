@@ -49,6 +49,12 @@ spec:
           imagePullPolicy: "{{ .Values.configmapReload.image.pullPolicy }}"
           args:
             - --volume-dir=/etc/config
+          {{- if .Values.server.sidecar.rules.enabled }}
+            - --volume-dir=/etc/config/rules.d
+          {{- end }}
+          {{- if .Values.server.sidecar.alerts.enabled }}
+            - --volume-dir=/etc/config/alerts.d
+          {{- end }}
             - --webhook-url=http://localhost:9090{{ .Values.server.prefixURL }}/-/reload
           {{- range $key, $value := .Values.configmapReload.extraArgs }}
             - --{{ $key }}={{ $value }}
@@ -59,11 +65,53 @@ spec:
             - name: config-volume
               mountPath: /etc/config
               readOnly: true
+          {{- if .Values.server.sidecar.rules.enabled }}
+            - name: sc-rules-volume
+              mountPath: /etc/config/rules.d
+              readOnly: true
+          {{- end }}
+          {{- if .Values.server.sidecar.alerts.enabled }}
+            - name: sc-alerts-volume
+              mountPath: /etc/config
+              readOnly: true
+          {{- end }}
           {{- range .Values.configmapReload.extraConfigmapMounts }}
             - name: {{ $.Values.configmapReload.name }}-{{ .name }}
               mountPath: {{ .mountPath }}
               readOnly: {{ .readOnly }}
           {{- end }}
+
+{{- if .Values.server.sidecar.rules.enabled }}
+        - name: {{ template "prometheus.name" . }}-sc-rules
+          image: "{{ .Values.server.sidecar.image }}"
+          imagePullPolicy: {{ .Values.server.sidecar.imagePullPolicy }}
+          env:
+            - name: LABEL
+              value: "{{ .Values.server.sidecar.rules.label }}"
+            - name: FOLDER
+              value: /etc/config/rules.d
+          resources:
+{{ toYaml .Values.server.sidecar.resources | indent 12 }}
+          volumeMounts:
+            - name: sc-rules-volume
+              mountPath: /etc/config/rules.d
+{{- end }}
+
+{{- if .Values.server.sidecar.alerts.enabled }}
+        - name: {{ template "prometheus.name" . }}-sc-alerts
+          image: "{{ .Values.server.sidecar.image }}"
+          imagePullPolicy: {{ .Values.server.sidecar.imagePullPolicy }}
+          env:
+            - name: LABEL
+              value: "{{ .Values.server.sidecar.alerts.label }}"
+            - name: FOLDER
+              value: /etc/config/alerts.d
+          resources:
+{{ toYaml .Values.server.sidecar.resources | indent 12 }}
+          volumeMounts:
+            - name: sc-alerts-volume
+              mountPath: /etc/config/alerts.d
+{{- end }}
 
         - name: {{ template "prometheus.name" . }}-{{ .Values.server.name }}
           image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag }}"
@@ -123,6 +171,14 @@ spec:
               mountPath: {{ .mountPath }}
               readOnly: {{ .readOnly }}
           {{- end }}
+          {{- if .Values.server.sidecar.rules.enabled }}
+            - name: sc-rules-volume
+              mountPath: /etc/config/rules.d
+          {{- end }}
+          {{- if .Values.server.sidecar.alerts.enabled }}
+            - name: sc-alerts-volume
+              mountPath: /etc/config/alerts.d
+          {{- end }}
     {{- if .Values.server.nodeSelector }}
       nodeSelector:
 {{ toYaml .Values.server.nodeSelector | indent 8 }}
@@ -175,4 +231,12 @@ spec:
         - name: {{ .name }}
           configMap:
             name: {{ .configMap }}
+      {{- end }}
+      {{- if .Values.server.sidecar.rules.enabled }}
+        - name: sc-rules-volume
+          emptyDir: {}
+      {{- end }}
+      {{- if .Values.server.sidecar.alerts.enabled }}
+        - name: sc-alerts-volume
+          emptyDir: {}
       {{- end }}

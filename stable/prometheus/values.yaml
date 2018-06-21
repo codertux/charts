@@ -638,6 +638,26 @@ server:
   ##
   retention: ""
 
+  ## Sidecars that collect the configmaps with specified label and stores the included files into the respective folders
+  sidecar:
+    image: kiwigrid/k8s-sidecar:0.0.3
+    imagePullPolicy: IfNotPresent
+    resources:
+  #   limits:
+  #     cpu: 100m
+  #     memory: 100Mi
+  #   requests:
+  #     cpu: 50m
+  #     memory: 50Mi
+    rules:
+      enabled: false
+      # label that the configmaps with rules are marked with
+      label: prometheus_rule
+    alerts:
+      enabled: false
+      # label that the configmaps with alerts are marked with
+      label: prometheus_alert
+
 pushgateway:
   ## If false, pushgateway will not be installed
   ##
@@ -764,6 +784,8 @@ serverFiles:
     rule_files:
       - /etc/config/rules
       - /etc/config/alerts
+      - /etc/config/rules.d/*
+      - /etc/config/alerts.d/*
 
     scrape_configs:
       - job_name: prometheus
